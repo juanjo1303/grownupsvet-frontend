@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@grownupsvet/api-client": "*",
+    "@grownupsvet/accessibility-kit": "*"
+  }
+}
