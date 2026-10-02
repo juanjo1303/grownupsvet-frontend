@@ -5,7 +5,6 @@
     "paths": {
       "@propietario/*": ["apps/propietario/src/*"],
       "@administrativo/*": ["apps/administrativo/src/*"],
-      "@ui/*": ["packages/ui/src/*"],
       "@api-client/*": ["packages/api-client/src/*"],
       "@accessibility-kit/*": ["packages/accessibility-kit/src/*"]
     },
@@ -16,9 +15,6 @@
     "apps/**/*.ts",
     "apps/**/*.tsx",
     "packages/**/*.ts",
-    "packages/**/*.tsx",
-    "src/**/*.ts",
-    "src/**/*.tsx"
-  ],
-  "exclude": ["apps/propietario/src/components/ui"]
+    "packages/**/*.tsx"
+  ]
 }
