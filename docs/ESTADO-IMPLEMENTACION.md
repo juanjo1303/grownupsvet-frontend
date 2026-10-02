@@ -1,7 +1,7 @@
 # GrownupsVet frontend: arquitectura y estado de implementación
 
-> **Estado:** arquitectura web del propietario y paquetes iniciales en progreso. La interfaz es una demostración local: no está conectada al backend. El portal administrativo y el cableado nativo de Expo no forman parte de la fase actual.
-
+> **Decisión de producto:** la app del propietario se entregará como aplicación nativa iOS/Android con Expo y React Native.
+> **Estado real de esta rama:** la entrada Expo aún muestra la pantalla de ejemplo; las pantallas de propietario existentes son un prototipo web separado, local y sin conexión al backend. No cuentan como implementación nativa ni deben ampliarse como sustituto de ella.
 >
 > **Nota (fix/api-client-contract-alignment):** `packages/api-client` fue
 > revisado contra el OpenAPI real del backend (incremento 0.7.0) y corregido:
@@ -13,22 +13,25 @@
 
 ## 1. Propósito y alcance
 
-Este documento describe la estructura actual del monorepo, las decisiones tomadas y qué está realmente implementado. Distingue las pantallas de demostración de las funcionalidades pendientes para evitar confundir una interacción local con una integración de producto.
+Este documento distingue el objetivo acordado del estado real del repositorio para evitar confundir una demostración web con una app móvil de producto. No se migran pantallas ni se cambia código como parte de esta actualización documental.
 
-### Incluido en la fase actual
+### Objetivo de producto
 
-- Organizar la experiencia web del propietario dentro de `apps/propietario/`.
-- Servir esa experiencia desde el host TanStack Start en la ruta `/`.
-- Preparar paquetes compartidos para contratos/endpoints, primitivas de interfaz y utilidades de accesibilidad.
-- Usar alias de importación por dominio en TypeScript y Vite.
-- Mantener formularios y datos locales mientras el frontend sigue en construcción.
+- Implementar la aplicación del propietario con React Native y Expo para iOS y Android.
+- Conectar el frontend al backend de forma incremental, empezando por autenticación y validando los contratos contra OpenAPI.
+- Reutilizar tipos y lógica de API solo después de comprobar su compatibilidad; las vistas y primitivas web no se consideran compartibles con React Native.
+- Completar para mascotas lista, detalle y crear/editar, así como componentes independientes para los estados de carga, vacío y error.
+- Representar esos estados nativos con `LoadingState`, `EmptyState` y `ErrorState`, no con el `ListState` web actual.
 
 ### Fuera del alcance actual
 
-- Implementar el portal administrativo.
-- Conectar la interfaz a endpoints o a un servidor backend.
-- Considerar los flujos locales como autenticación, persistencia o acciones reales de cuenta.
-- Reemplazar la interfaz nativa existente por componentes web: Expo requiere una implementación compatible con React Native.
+- Implementar el portal administrativo; queda reservado para una fase posterior.
+
+### Estado actual
+
+- La experiencia TanStack Start actual es un prototipo web independiente; aún no se ha decidido si se conservará como superficie secundaria o se retirará.
+- No extender el prototipo web en lugar de construir la aplicación nativa.
+- Los flujos locales no representan autenticación, persistencia ni acciones reales de cuenta.
 
 ## 2. Estructura del repositorio
 
@@ -36,9 +39,8 @@ Este documento describe la estructura actual del monorepo, las decisiones tomada
 grownupsvet-frontend/
 ├── apps/
 │   ├── propietario/
-│   │   ├── App.tsx                         # Entrada Expo actual; aún es la pantalla de ejemplo
 │   │   └── src/
-│   │       ├── PropietarioApp.tsx          # Orquestador de la demostración web del propietario
+│   │       ├── PropietarioApp.tsx          # Orquestador del prototipo web del propietario
 │   │       ├── screens/
 │   │       │   ├── LoginScreen.tsx
 │   │       │   ├── CreateAccountScreen.tsx
@@ -53,13 +55,13 @@ grownupsvet-frontend/
 │   └── administrativo/
 │       └── package.json                    # Workspace reservado; portal diferido
 ├── packages/
-│   ├── ui/src/                             # Primitivas web compartidas
+│   ├── ui/src/                             # Primitivas web basadas en Radix; no son React Native
 │   ├── api-client/src/                     # Contratos y fetchers preparados
-│   └── accessibility-kit/src/              # Utilidades de accesibilidad iniciales
+│   └── accessibility-kit/src/              # Helpers iniciales; incluye utilidades ARIA web
 ├── src/
 │   ├── routes/
 │   │   ├── __root.tsx                      # HTML raíz, estilos, fuentes y metadatos
-│   │   └── index.tsx                       # Ruta host / que monta PropietarioApp
+│   │   └── index.tsx                       # Host web / que monta PropietarioApp
 │   ├── router.tsx                          # Fábrica del router TanStack
 │   ├── server.ts                           # Entrada del servidor TanStack Start
 │   ├── routeTree.gen.ts                    # Árbol generado de rutas
@@ -67,33 +69,33 @@ grownupsvet-frontend/
 │   └── styles.css                          # Tokens, tema y estilos globales web
 ├── assets/
 │   └── favicon.png
+├── App.tsx                                 # Entrada Expo actual; aún es la pantalla de ejemplo
 ├── app.json                                # Configuración de Expo
 ├── package.json                            # Workspaces, dependencias y scripts
 ├── tsconfig.json                           # Configuración TypeScript y alias
 └── vite.config.ts                          # Host Vite/TanStack Start y alias del bundler
 ```
 
-Los componentes UI heredados de `apps/propietario/src/components/ui/` y su configuración local de shadcn fueron retirados: las pantallas usan las primitivas compartidas de `packages/ui`.
+Las pantallas bajo `apps/propietario/src/` y las primitivas de `packages/ui` son web. No se pueden renderizar directamente en Expo nativo. La decisión de mantener o retirar el prototipo web queda pendiente; la implementación nativa es el objetivo del producto en cualquiera de los casos.
 
 ## 3. Tecnologías
 
 Las versiones indicadas son las declaradas en el manifiesto raíz en el momento de redactar este documento.
 
-| Área | Tecnología |
-|---|---|
-| App móvil y runtime nativo existente | Expo SDK `~57.0.22`, React Native `0.86.3` |
-| Interfaz web y host | React `19.2.3`, React DOM `19.2.3`, TanStack Start `1.168.60`, TanStack Router `1.170.41` |
-| Bundler y estilos web | Vite `8.1.5`, Tailwind CSS `4.2.1`, `tw-animate-css` |
-| Lenguaje | TypeScript `~6.0.3`, modo estricto |
-| Primitivas accesibles | Radix UI |
-| Iconos | `lucide-react` |
-| Workspaces | npm workspaces: `apps/*` y `packages/*` |
+| Área | Objetivo de producto | Implementación actual en esta rama |
+|---|---|---|
+| Aplicación del propietario | Expo SDK `~57.0.22` y React Native `0.86.3` para iOS/Android | La entrada `App.tsx` aún es la pantalla de ejemplo; no contiene los flujos del propietario |
+| Superficie web | No es el entregable móvil acordado; conservarla o retirarla está por decidir | React `19.2.3`, React DOM `19.2.3`, TanStack Start `1.168.60`, TanStack Router `1.170.41` |
+| Bundler/estilos web | No aplican a la UI nativa | Vite `8.1.5`, Tailwind CSS `4.2.1`, `tw-animate-css` |
+| Lenguaje | TypeScript `~6.0.3`, modo estricto | TypeScript `~6.0.3`, modo estricto |
+| UI y accesibilidad | Componentes y APIs accesibles compatibles con React Native | Radix UI, HTML, Tailwind y helpers ARIA; solo para web |
+| Workspaces | Monorepo npm | npm workspaces: `apps/*` y `packages/*` |
 
-Las pantallas migradas usan HTML y clases de Tailwind; no son componentes React Native. El host web y la app nativa son superficies diferentes, aunque compartan el mismo repositorio.
+Expo requiere una implementación React Native. El host TanStack sirve exclusivamente el prototipo web actual; compartir repositorio no hace que sus pantallas sean reutilizables en móvil.
 
 ## 4. Alias de importación
 
-Los alias están declarados en `tsconfig.json` y en la configuración de Vite. Cada prefijo señala explícitamente su dominio:
+Los alias actuales están declarados en `tsconfig.json` y Vite:
 
 | Alias | Destino |
 |---|---|
@@ -103,11 +105,11 @@ Los alias están declarados en `tsconfig.json` y en la configuración de Vite. C
 | `@api-client/*` | `packages/api-client/src/*` |
 | `@accessibility-kit/*` | `packages/accessibility-kit/src/*` |
 
-Por ejemplo, `@propietario/components/ListState` identifica el componente por su dominio en lugar de depender de cuántos directorios relativos hay que subir. Esto hace que las importaciones sigan siendo legibles si cambia la ubicación de una pantalla.
+Los paquetes publican nombres `@grownupsvet/*`, mientras que el código usa alias cortos como `@api-client/*` y `@ui/*`. Para evitar dos convenciones, el trabajo futuro debe converger en `@grownupsvet/*`; este ajuste queda pendiente y no cambia el código en esta actualización.
 
 ## 5. Funcionalidad actual de la demostración
 
-La experiencia web del propietario se monta desde `src/routes/index.tsx`. `PropietarioApp.tsx` maneja la navegación local entre autenticación, pestañas y perfil. Mientras se muestra la app, un aviso indica que la información es de demostración y que no hay conexión al servidor.
+El prototipo web del propietario se monta desde `src/routes/index.tsx`. `PropietarioApp.tsx` maneja navegación local entre autenticación, pestañas y perfil. Mientras se muestra el prototipo, un aviso indica que la información es de demostración y que no hay conexión al servidor. Estos flujos no son parte de la app Expo.
 
 | Pantalla | Qué se puede probar localmente | Qué no hace todavía |
 |---|---|---|
@@ -121,7 +123,7 @@ La experiencia web del propietario se monta desde `src/routes/index.tsx`. `Propi
 
 Los datos creados durante la demostración se pierden al reiniciar la aplicación. Algunas acciones de cuenta y fotografía muestran avisos o confirmaciones de navegador; no representan operaciones reales.
 
-## 6. Paquetes compartidos
+## 6. Paquetes y grado de reutilización
 
 ### `packages/api-client`
 
@@ -135,19 +137,19 @@ La capa define tipos y una base para configurar solicitudes HTTP:
 - `availability.api.ts`: consulta de turnos disponibles.
 - `index.ts`: exportaciones del paquete.
 
-**Es preparación de endpoints, no integración terminada.** La app no configura el cliente ni invoca estos fetchers. Aún faltan revisar los contratos contra OpenAPI, definir el manejo de sesión/token, completar los servicios de perfil y decidir cómo integrar cada mutación una vez que la interfaz esté lista.
+**Es preparación de endpoints, no integración terminada.** Ninguna interfaz configura el cliente ni invoca estos fetchers. Los tipos y fetchers son candidatos a reutilización, pero deben verificarse contra OpenAPI antes de conectarlos. Esta rama no incluye `profile.service.ts`; tampoco incluye fetchers para perfil o foto. `client.ts` es el cliente HTTP existente.
 
 ### `packages/ui`
 
-Contiene primitivas web compartidas: botones, tarjetas, diálogos, campos, etiquetas, textarea, badges, tabs, skeleton y utilidades de clases. Las pantallas importan desde `@ui/*`. No es una biblioteca de componentes React Native.
+Contiene primitivas web: botones, tarjetas, diálogos, campos, etiquetas, textarea, badges, tabs, skeleton y utilidades de clases. Las pantallas web importan desde `@ui/*`. No es una biblioteca de componentes React Native.
 
 ### `packages/accessibility-kit`
 
-Contiene helpers iniciales de contraste WCAG, escala de texto y propiedades para anuncios ARIA. Son herramientas base; todavía no equivalen a una auditoría ni a soporte de lector de pantalla probado en todos los flujos.
+Contiene helpers iniciales de contraste WCAG, escala de texto y propiedades para anuncios ARIA. Son herramientas base de web; necesitan adaptación y validación con las APIs de accesibilidad nativas.
 
-## 7. Host, estilos y metadatos
+## 7. Host web, estilos y metadatos
 
-- La ruta `/` de TanStack Start importa y renderiza `PropietarioApp`; el host sirve la experiencia web sin mover la lógica de las pantallas al framework de routing.
+- La ruta `/` de TanStack Start importa y renderiza `PropietarioApp`; es el host del prototipo web, no la entrada de la app móvil.
 - `src/router.tsx` crea el router a partir del árbol generado.
 - `src/server.ts` provee el handler de TanStack Start que espera el host.
 - `src/styles.css` define tokens de color, temas claro/oscuro, tipografía base de 17 px y estilos globales.
@@ -156,24 +158,22 @@ Contiene helpers iniciales de contraste WCAG, escala de texto y propiedades para
 
 ## 8. Decisiones de alcance y arquitectura
 
-1. **Primero la interfaz del propietario.** El portal administrativo se reserva para una fase futura y no debe considerarse implementado.
-2. **Sin llamadas al backend durante el desarrollo de pantallas.** La interfaz usa datos locales; el cliente compartido prepara contratos/endpoints para una integración posterior.
-3. **Host desacoplado.** TanStack Start proporciona la ruta web `/`, mientras que las pantallas se mantienen bajo `apps/propietario`.
-4. **Web y nativo se cablean por separado.** El host web puede renderizar las pantallas actuales; Expo requiere pantallas compatibles con React Native y no debe importar directamente estas vistas DOM.
-5. **Paquetes compartidos por responsabilidad.** UI, contratos de API y helpers de accesibilidad tienen carpetas separadas.
-6. **Alias por dominio.** Se prefirieron prefijos como `@ui/*` y `@propietario/*` para hacer explícito el origen de cada importación.
-7. **El progreso de los mocks se comunica en la interfaz y en la documentación.** Ningún flujo local debe confundirse con un registro, login o cambio persistente.
+1. **Producto nativo.** La aplicación del propietario se construirá con Expo y React Native; el prototipo TanStack no sustituye ni completa ese producto.
+2. **Alcance web pendiente.** No está decidido si se conservará el prototipo web como superficie secundaria o se retirará. No ampliar sus flujos mientras esa decisión siga abierta.
+3. **Integración incremental.** Conectar por fases desde autenticación, tras validar contratos contra OpenAPI; no posponer toda integración hasta completar todas las pantallas. El estado actual sigue siendo desconectado.
+4. **Separación de plataformas.** Las vistas DOM, Tailwind, Radix UI y atributos ARIA existentes son específicos de web. Expo requiere pantallas, navegación, controles y propiedades de accesibilidad React Native.
+5. **Reutilización selectiva.** Tipos y lógica del cliente API pueden compartirse si pasan la validación de contrato/runtime. `packages/ui` y las utilidades ARIA no son primitivas nativas.
+6. **Convención de paquetes.** Converger los imports en `@grownupsvet/*`, que coincide con los nombres de los workspaces; los alias cortos actuales son transitorios.
+7. **Mocks claramente identificados.** Ningún flujo local debe confundirse con un registro, login o cambio persistente.
 
-## 9. Pendientes
+## 9. Próximos pasos y pendientes
 
-- [ ] Completar los flujos visuales y de interacción del propietario antes de conectarlos al backend.
-- [ ] Implementar edición completa de mascotas; ampliar el detalle y validar acciones de archivo/reactivación.
-- [ ] Completar el formulario y estados de solicitud de citas; diseñar estados de carga, vacío y error para todos los recorridos pertinentes.
-- [ ] Completar los flujos de perfil: persistencia futura del teléfono, foto y desactivación con confirmación accesible.
-- [ ] Revisar los tipos y endpoints del cliente API contra OpenAPI; agregar servicios de perfil y token/sesión cuando la integración esté aprobada.
-- [ ] Mantener el cliente API sin configurar ni invocar desde la UI hasta que el frontend esté listo para la integración.
-- [ ] Completar accesibilidad con foco consistente, controles por teclado, anuncios en español y pruebas con lectores de pantalla.
-- [ ] Conectar `apps/propietario/App.tsx` y las pantallas nativas a una implementación React Native. Las pantallas web actuales no se pueden reutilizar directamente en Expo nativo.
+- [ ] Decidir si se conserva el prototipo web como superficie secundaria o se retira.
+- [ ] Implementar y conectar los flujos de propietario en React Native/Expo, empezando por autenticación y validando endpoints contra OpenAPI.
+- [ ] Implementar mascotas con lista, detalle y crear/editar; añadir componentes separados para estados de carga, vacío y error.
+- [ ] Unificar alias e imports del monorepo bajo `@grownupsvet/*`.
+- [ ] Añadir y verificar servicios de perfil; resolver almacenamiento seguro de sesión para Expo antes de habilitar auth.
+- [ ] Completar accesibilidad con controles y APIs nativas, incluidos anuncios en español y pruebas con lectores de pantalla.
 - [ ] Resolver el preview de producción: Vite genera salida Cloudflare/Nitro en `.output/`, pero `vite preview` intentó buscar `dist/server/server.js`; Nitro preview también falló en el entorno validado.
 - [ ] Configurar URL pública e imagen de compartir, y revisar si Figtree debe servirse localmente en lugar de depender de Google Fonts.
 - [ ] Implementar el portal administrativo en una fase posterior.
@@ -207,6 +207,6 @@ npx tsc --noEmit
 # Lint del repositorio (incluye actualmente archivos heredados pendientes)
 npm run lint
 
-# Expo nativo: entrada existente todavía no conectada a las pantallas web
+# Expo nativo: entrada existente de ejemplo; los flujos de propietario aún no están implementados
 npm start
 ```

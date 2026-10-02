@@ -1,10 +1,10 @@
 # GrownupsVet frontend
 
-> Arquitectura, decisiones, funcionalidades de demostración, validación y pendientes: [docs/ESTADO-IMPLEMENTACION.md](./docs/ESTADO-IMPLEMENTACION.md).
+> Arquitectura acordada, estado real y próximos pasos: [docs/ESTADO-IMPLEMENTACION.md](./docs/ESTADO-IMPLEMENTACION.md).
 
-Monorepo de GrownupsVet. La experiencia web del propietario se sirve desde el host TanStack Start en `/`; las pantallas y contratos compartidos viven en workspaces. El portal administrativo queda fuera del alcance actual.
+Monorepo de GrownupsVet. El producto del propietario se entregará como app móvil nativa para iOS y Android con Expo/React Native. Las pantallas web servidas por TanStack Start en `/` son un prototipo independiente: no son la app Expo ni se reutilizan directamente en ella. El portal administrativo queda fuera del alcance actual.
 
-El backend compartido es [grownupsvet-backend](https://github.com/Estebangmz666/grownupsvet-backend) (Spring Boot 4.1.1). La interfaz actual es una demostración local y no está conectada al backend. El cliente API solo prepara los contratos y la configuración base de endpoints.
+El backend compartido es [grownupsvet-backend](https://github.com/Estebangmz666/grownupsvet-backend) (Spring Boot 4.1.1). El prototipo web actual usa datos locales y no está conectado al backend. El cliente API incluye tipos y fetchers preparados; su compatibilidad con OpenAPI y su integración incremental siguen pendientes.
 
 ## Estructura del monorepo
 
@@ -12,26 +12,27 @@ El backend compartido es [grownupsvet-backend](https://github.com/Estebangmz666/
 grownupsvet-frontend/
   package.json                    workspaces: apps/*, packages/*
   apps/
-    propietario/src/screens/      pantallas de acceso, perfil, mascotas y citas
-    propietario/src/navigation/   navegación inferior móvil
-    propietario/src/components/   componentes de dominio
+    propietario/src/screens/      pantallas web de demostración; no son React Native
+    propietario/src/navigation/   navegación web de demostración
+    propietario/src/components/   componentes web de demostración
     administrativo/                reservado para una fase futura
   packages/
-    ui/                            primitivas visuales compartidas
+    ui/                            primitivas web basadas en Radix UI; no son React Native
     api-client/                    contratos TypeScript y fetchers HTTP
-    accessibility-kit/             contraste, tipografía y anuncios ARIA
+    accessibility-kit/             helpers web/ARIA; requieren adaptación para uso nativo
   src/
-    routes/                        host TanStack Start: propietario en /
+    routes/                        host web de demostración TanStack Start: propietario en /
     styles.css                     tokens globales y temas
+  App.tsx                          entrada Expo existente (aún muestra la pantalla de ejemplo)
 ```
 
-`src/routes/index.tsx` es un host delgado que renderiza `PropietarioApp`; la lógica y pantallas web continúan en `apps/propietario`.
+`src/routes/index.tsx` es un host web que renderiza `PropietarioApp`. Esta superficie sirve como prototipo y no debe considerarse avance de implementación nativa. La entrada Expo real está en `App.tsx` en la raíz y todavía muestra la pantalla inicial de ejemplo.
 
-Los alias de TypeScript y Vite son explícitos por dominio: `@propietario/*`, `@administrativo/*`, `@ui/*`, `@api-client/*` y `@accessibility-kit/*`.
+Los alias cortos actuales (`@propietario/*`, `@ui/*`, `@api-client/*`, etc.) son transitorios; el objetivo es unificar los imports de workspaces bajo `@grownupsvet/*`.
 
-## packages/api-client
+## `packages/api-client`
 
-Paquete compartido con contratos TypeScript, configuración de la URL base/token y fetchers preparados. No se configura en el host ni se invoca desde las pantallas; no hay llamadas al backend durante el desarrollo de esta interfaz. Los fetchers son una preparación de endpoints, no una integración terminada.
+Paquete candidato a compartirse entre superficies, con contratos TypeScript, configuración de URL base/token y fetchers preparados. No se configura ni se invoca desde la interfaz actual; no hay llamadas al backend. Antes de integrar, hay que verificar los contratos contra OpenAPI y adaptar la persistencia de sesión al runtime nativo.
 
 | Archivo               | Contenido                                                                              |
 | --------------------- | -------------------------------------------------------------------------------------- |
@@ -42,7 +43,9 @@ Paquete compartido con contratos TypeScript, configuración de la URL base/token
 | `appointments.api.ts` | Listar, solicitar, cancelar y consultar eventos de citas                               |
 | `availability.api.ts` | Consulta de turnos disponibles                                                         |
 
-### Endpoints conectables hoy
+### Endpoints documentados en el repositorio
+
+La tabla describe endpoints del backend, no fetchers ya implementados ni contratos verificados en esta rama.
 
 | Función                    | Endpoint                                                                                            |
 | -------------------------- | --------------------------------------------------------------------------------------------------- |
@@ -50,8 +53,8 @@ Paquete compartido con contratos TypeScript, configuración de la URL base/token
 | Login                      | `POST /api/v1/auth/sessions`                                                                        |
 | Logout                     | `DELETE /api/v1/auth/sessions/current`                                                              |
 | Recuperación de contraseña | `POST /api/v1/auth/password-recoveries` → `.../verifications` → `POST /api/v1/auth/password-resets` |
-| Perfil propio              | `GET` / `PATCH /api/v1/users/me` (solo `phoneNumber` editable)                                      |
-| Foto de perfil             | `GET` / `PUT` / `DELETE /api/v1/users/me/profile/photo`                                             |
+| Perfil propio              | `GET` / `PATCH /api/v1/users/me` (solo `phoneNumber` editable; fetcher pendiente en esta rama)       |
+| Foto de perfil             | `GET` / `PUT` / `DELETE /api/v1/users/me/profile/photo` (fetchers pendientes en esta rama)           |
 | Mascotas                   | `POST /api/v1/pets`, `GET /api/v1/pets`, `GET`/`PATCH /api/v1/pets/{petId}`                         |
 
 ### Endpoints de citas y disponibilidad
@@ -70,6 +73,8 @@ Estados posibles de una cita: `REQUESTED`, `CONFIRMED`, `REJECTED`, `CANCELLED`.
 
 ## Alcance y estado
 
+La tabla describe únicamente el prototipo web existente, no el nivel de avance de la app nativa.
+
 Las pantallas web de propietario incluyen una demostración visual y navegación por pestañas:
 
 | Pantalla                   | Estado                                                              |
@@ -81,17 +86,18 @@ Las pantallas web de propietario incluyen una demostración visual y navegación
 | Citas                      | Datos locales; solicitud de demostración, integración pendiente     |
 | Perfil                     | Datos locales; foto, edición persistente y desactivación pendientes |
 
-### Pendiente antes de considerar completo el frontend
+### Próximos pasos del producto nativo
 
-- [ ] Reemplazar los flujos simulados por estados, mensajes y navegación de producto terminados; incluir edición y detalle de mascotas, formulario de cita completo y estados de error/vacío/loading verificados.
-- [ ] Cablear los formularios a los servicios API cuando el frontend esté listo para integrarse. Hasta entonces, mantener el cliente desconectado y no hacer solicitudes.
-- [ ] Añadir los servicios/contratos de perfil que falten y verificar todos los contratos de endpoint contra OpenAPI antes de habilitar solicitudes.
-- [ ] Completar la accesibilidad: anillo de foco compartido, anuncios en español probados con lector de pantalla y flujos accesibles de diálogo/confirmación.
-- [ ] Conectar pantallas compatibles con React Native a la entrada Expo `apps/propietario/App.tsx`. La estructura `screens/` actual es web y no se puede renderizar directamente desde Expo nativo; el host TanStack `/` sí monta la aplicación web.
+- [ ] Antes de ampliar el prototipo web, decidir si se conserva como superficie secundaria o se retira; no confundirlo con el producto móvil.
+- [ ] Implementar en React Native/Expo los flujos de propietario acordados: autenticación, mascotas (lista, detalle y crear/editar), citas, perfil y estados de carga/vacío/error.
+- [ ] Unificar los imports de workspaces con la convención `@grownupsvet/*`; los alias cortos actuales (`@api-client/*`, `@ui/*`, etc.) son transitorios.
+- [ ] Conectar la app por fases desde autenticación, validando los endpoints contra OpenAPI y usando almacenamiento seguro nativo para la sesión.
+- [ ] Completar la capa API de perfil antes de conectar sus pantallas: en esta rama no existe `profile.service.ts`; `client.ts` es el cliente HTTP actual.
+- [ ] Adaptar la accesibilidad al modelo nativo; los helpers ARIA y las primitivas Radix web no sustituyen componentes ni propiedades accesibles de React Native.
+
 - [ ] Definir y verificar la URL pública de despliegue y una imagen absoluta para tarjetas de compartir (Open Graph/Twitter).
 - [ ] Verificar el servidor de preview de producción para el preset Cloudflare de Nitro; el build y el servidor de desarrollo funcionan, pero los comandos de preview actuales no sirven la salida generada.
 - [ ] Implementar el portal administrativo en una fase posterior; no forma parte de este alcance.
-- [ ] Instalar dependencias y ejecutar typecheck, build y lint para validar la migración.
 
 ## Accesibilidad prevista
 
