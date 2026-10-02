@@ -1,31 +1,37 @@
 import { apiRequest } from "./client";
-import type { UserProfile } from "./types";
+import type { AuthenticatedUser } from "./types";
 
 export interface LoginInput {
   email: string;
   password: string;
 }
 
-export interface RegisterInput extends LoginInput {
+export interface RegisterInput {
+  email: string;
+  password: string;
   fullName: string;
-  birthDate: string;
-  phone: string;
+  dateOfBirth: string;
+  phoneNumber: string;
 }
 
-export interface SessionResponse {
-  user: UserProfile;
+export interface LoginResponse {
   accessToken: string;
+  tokenType: "Bearer";
+  expiresIn: number;
+  user: AuthenticatedUser;
 }
 
-export function login(input: LoginInput): Promise<SessionResponse> {
-  return apiRequest<SessionResponse>("/auth/sessions", {
+export function login(input: LoginInput): Promise<LoginResponse> {
+  return apiRequest<LoginResponse>("/auth/sessions", {
     method: "POST",
     body: JSON.stringify(input),
   });
 }
 
-export function register(input: RegisterInput): Promise<UserProfile> {
-  return apiRequest<UserProfile>("/auth/registrations", {
+export function register(
+  input: RegisterInput,
+): Promise<{ id: string; email: string }> {
+  return apiRequest("/auth/registrations", {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -42,23 +48,25 @@ export function requestPasswordRecovery(email: string): Promise<void> {
   });
 }
 
+export interface VerifyPasswordRecoveryResponse {
+  resetToken: string;
+  expiresIn: number;
+}
+
 export function verifyPasswordRecovery(
-  recoveryId: string,
+  email: string,
   code: string,
-): Promise<void> {
-  return apiRequest<void>(
-    `/auth/password-recoveries/${encodeURIComponent(recoveryId)}/verifications`,
-    {
-      method: "POST",
-      body: JSON.stringify({ code }),
-    },
+): Promise<VerifyPasswordRecoveryResponse> {
+  return apiRequest<VerifyPasswordRecoveryResponse>(
+    "/auth/password-recoveries/verifications",
+    { method: "POST", body: JSON.stringify({ email, code }) },
   );
 }
 
 export function resetPassword(input: {
-  email: string;
-  code: string;
-  password: string;
+  resetToken: string;
+  newPassword: string;
+  confirmNewPassword: string;
 }): Promise<void> {
   return apiRequest<void>("/auth/password-resets", {
     method: "POST",

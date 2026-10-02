@@ -39,7 +39,7 @@ export function ProfileScreen({
   onDeactivate,
 }: ProfileScreenProps) {
   const [editingPhone, setEditingPhone] = useState(false);
-  const [phone, setPhone] = useState(user.phone);
+  const [phone, setPhone] = useState(user.phoneNumber);
 
   const savePhone = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -77,19 +77,19 @@ export function ProfileScreen({
             Fecha de nacimiento
           </span>
           <span className="text-lg font-bold">
-            {formatBirthDate(user.birthDate)}
+            {formatBirthDate(user.dateOfBirth)}
           </span>
         </div>
         <div className="h-px bg-border" />
         <div className="flex items-center justify-between gap-3 py-5">
           <div>
             <p className="text-lg text-muted-foreground">Teléfono</p>
-            <p className="text-lg font-bold">{user.phone}</p>
+            <p className="text-lg font-bold">{user.phoneNumber}</p>
           </div>
           <button
             type="button"
             onClick={() => {
-              setPhone(user.phone);
+              setPhone(user.phoneNumber);
               setEditingPhone(true);
             }}
             aria-label="Editar teléfono"

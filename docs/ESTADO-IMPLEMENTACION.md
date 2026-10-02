@@ -2,6 +2,15 @@
 
 > **Estado:** arquitectura web del propietario y paquetes iniciales en progreso. La interfaz es una demostración local: no está conectada al backend. El portal administrativo y el cableado nativo de Expo no forman parte de la fase actual.
 
+>
+> **Nota (fix/api-client-contract-alignment):** `packages/api-client` fue
+> revisado contra el OpenAPI real del backend (incremento 0.7.0) y corregido:
+> nombres de campo (`dateOfBirth`/`phoneNumber`/`active`), paginación con
+> `items` en vez de `content`, tipos completos de `Appointment`/`Pet`, manejo
+> de `errorCode`/`fieldErrors`, y eliminación de un endpoint de cancelación
+> que no existe en el backend. El prototipo web sigue sin conectarse a ningún
+> endpoint real; este cambio no altera esa decisión.
+
 ## 1. Propósito y alcance
 
 Este documento describe la estructura actual del monorepo, las decisiones tomadas y qué está realmente implementado. Distingue las pantallas de demostración de las funcionalidades pendientes para evitar confundir una interacción local con una integración de producto.

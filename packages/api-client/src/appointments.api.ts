@@ -52,15 +52,8 @@ export function getAppointment(appointmentId: string): Promise<Appointment> {
 
 export function listAppointmentEvents(
   appointmentId: string,
-): Promise<AppointmentEvent[]> {
-  return apiRequest<AppointmentEvent[]>(
+): Promise<Page<AppointmentEvent>> {
+  return apiRequest<Page<AppointmentEvent>>(
     `/appointments/${encodeURIComponent(appointmentId)}/events`,
-  );
-}
-
-export function cancelAppointment(appointmentId: string): Promise<Appointment> {
-  return apiRequest<Appointment>(
-    `/appointments/${encodeURIComponent(appointmentId)}/cancellations`,
-    { method: "POST" },
   );
 }

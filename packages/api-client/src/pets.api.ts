@@ -10,12 +10,19 @@ export interface ListPetsParams {
 export interface CreatePetInput {
   name: string;
   species: Species;
-  sex: Sex;
-  breed?: string;
-  birthDate?: string;
+  breed?: string | null;
+  sex?: Sex | null;
+  dateOfBirth?: string | null;
+  dateOfBirthEstimated?: boolean;
 }
 
-export type UpdatePetInput = Partial<CreatePetInput> & { archived?: boolean };
+export type UpdatePetInput = Partial<
+  Omit<CreatePetInput, "name" | "species">
+> & {
+  name?: string;
+  species?: Species;
+  active?: boolean;
+};
 
 export async function listPets(
   params: ListPetsParams = {},
@@ -42,6 +49,10 @@ export function updatePet(petId: string, input: UpdatePetInput): Promise<Pet> {
   });
 }
 
-export function setPetArchived(petId: string, archived: boolean): Promise<Pet> {
-  return updatePet(petId, { archived });
+export function archivePet(petId: string): Promise<Pet> {
+  return updatePet(petId, { active: false });
+}
+
+export function reactivatePet(petId: string): Promise<Pet> {
+  return updatePet(petId, { active: true });
 }

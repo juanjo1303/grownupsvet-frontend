@@ -27,8 +27,11 @@ export function PropietarioApp() {
               id: "demo-user",
               fullName: "Usuario GrownupsVet",
               email,
-              birthDate: "1980-01-01",
-              phone: "",
+              role: "OWNER",
+              active: true,
+              dateOfBirth: "1980-01-01",
+              phoneNumber: "",
+              profilePhotoUrl: null,
             });
             setActiveTab("pets");
           }}
@@ -73,7 +76,9 @@ export function PropietarioApp() {
             window.alert("La carga de foto todavía no está disponible.")
           }
           onEditPhone={(phone) =>
-            setUser((current) => (current ? { ...current, phone } : current))
+            setUser((current) =>
+              current ? { ...current, phoneNumber: phone } : current,
+            )
           }
           onLogout={() => {
             setUser(null);
