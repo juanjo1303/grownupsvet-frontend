@@ -35,6 +35,10 @@ export async function listPets(
   return apiRequest<Page<Pet>>(`/pets${suffix}`);
 }
 
+export function getPet(petId: string): Promise<Pet> {
+  return apiRequest<Pet>(`/pets/${encodeURIComponent(petId)}`);
+}
+
 export function createPet(input: CreatePetInput): Promise<Pet> {
   return apiRequest<Pet>("/pets", {
     method: "POST",
